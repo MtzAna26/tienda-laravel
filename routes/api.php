@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ApiAuthController;
+use App\Http\Controllers\Api\ProductoController;
+use App\Http\Controllers\Api\TiendaController;
 
 /*
 Route::get('/user', function (Request $request) {
@@ -28,8 +30,13 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 Route::middleware('auth:sanctum')->post('/logout', [ApiAuthController::class, 'logout']);
 
-//Route::post('/logout', [ApiAuthController::class, 'logout']);
+Route::middleware('auth:sanctum')->group(function () {
+    // CRUD Tiendas
+    Route::apiResource('tiendas', TiendaController::class);
 
+    // CRUD Productos
+    Route::apiResource('productos', ProductoController::class);
+});
 /*
 Route::get('/students', function (){
     return 'obtniendo estudiantes';
