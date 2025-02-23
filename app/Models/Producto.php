@@ -15,4 +15,8 @@ class Producto extends Model
     {
         return $this->belongsTo(Tienda::class);
     }
+
+    public function detallesCompra(){
+        return $this->hasMany(DetalleCompra::class);
+    }
 }

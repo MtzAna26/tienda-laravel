@@ -43,3 +43,5 @@ Route::post('/carrito/agregar', [CarritoController::class, 'agregarProducto']);
 Route::delete('/carrito/eliminar', [CarritoController::class, 'eliminarProducto']);
 Route::post('/carrito/finalizar', [CarritoController::class, 'finalizarCompra']);
 Route::get('/compras/historial', [CarritoController::class, 'historialCompras']);
+
+Route::get('/ventas/historial', [CarritoController::class, 'historialVentas']);

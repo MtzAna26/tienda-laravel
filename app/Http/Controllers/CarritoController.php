@@ -8,6 +8,7 @@ use App\Models\DetalleCarrito;
 use App\Models\Producto;
 use App\Models\Compra;
 use App\Models\DetalleCompra;
+use App\Models\Tienda;
 use Illuminate\Support\Facades\Redis;
 
 class CarritoController extends Controller
@@ -73,7 +74,7 @@ class CarritoController extends Controller
         return response()->json(['message' => 'Producto no encontrado en el carrito'], 404);
     }
 
-        public function finalizarCompra(Request $request)
+    public function finalizarCompra(Request $request)
     {
         $request->validate([
             'cliente_id' => 'required|exists:clientes,id'
@@ -119,7 +120,7 @@ class CarritoController extends Controller
         // Registrar detalles de compra y actualizar stock
         foreach ($detalles as $detalle) {
             $producto = Producto::find($detalle->producto_id);
-            
+
             DetalleCompra::create([
                 'compra_id' => $compra->id,
                 'producto_id' => $producto->id,
@@ -142,7 +143,7 @@ class CarritoController extends Controller
         return response()->json(['message' => 'Compra finalizada con éxito', 'compra_id' => $compra->id], 200);
     }
 
-        public function historialCompras(Request $request)
+    public function historialCompras(Request $request)
     {
         $request->validate([
             'cliente_id' => 'required|exists:clientes,id'
@@ -161,4 +162,30 @@ class CarritoController extends Controller
     }
 
 
+    public function historialVentas(Request $request)
+    {
+        $request->validate([
+            'vendedor_id' => 'required|exists:vendedores,id'
+        ]);
+
+        // Obtener la tienda del vendedor
+        $tienda = Tienda::where('id_vendedor', $request->vendedor_id)->first();
+
+        if (!$tienda) {
+            return response()->json(['message' => 'El vendedor no tiene una tienda registrada'], 404);
+        }
+
+        // Obtener todas las compras relacionadas con los productos de la tienda
+        $ventas = Compra::whereHas('detalles.producto', function ($query) use ($tienda) {
+            $query->where('id_tienda', $tienda->id);
+        })
+            ->with(['detalles.producto', 'detalles.producto.tienda']) // Cargar detalles de compra y productos con tienda
+            ->get();
+
+        if ($ventas->isEmpty()) {
+            return response()->json(['message' => 'No se encontraron ventas para esta tienda'], 404);
+        }
+
+        return response()->json(['ventas' => $ventas], 200);
+    }
 }
