@@ -142,4 +142,23 @@ class CarritoController extends Controller
         return response()->json(['message' => 'Compra finalizada con éxito', 'compra_id' => $compra->id], 200);
     }
 
+        public function historialCompras(Request $request)
+    {
+        $request->validate([
+            'cliente_id' => 'required|exists:clientes,id'
+        ]);
+
+        // Obtener todas las compras del cliente
+        $compras = Compra::where('cliente_id', $request->cliente_id)
+            ->with('detalles.producto') // Cargar detalles de la compra y productos
+            ->get();
+
+        if ($compras->isEmpty()) {
+            return response()->json(['message' => 'No se encontraron compras para este cliente'], 404);
+        }
+
+        return response()->json(['compras' => $compras], 200);
+    }
+
+
 }
