@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ApiAuthController;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\TiendaController;
+use App\Http\Controllers\CarritoController;
 
 /*
 Route::get('/user', function (Request $request) {
@@ -37,6 +38,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // CRUD Productos
     Route::apiResource('productos', ProductoController::class);
 });
+
+Route::post('/carrito/agregar', [CarritoController::class, 'agregarProducto']);
+Route::delete('/carrito/eliminar', [CarritoController::class, 'eliminarProducto']);
 /*
 Route::get('/students', function (){
     return 'obtniendo estudiantes';
