@@ -41,7 +41,4 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::post('/carrito/agregar', [CarritoController::class, 'agregarProducto']);
 Route::delete('/carrito/eliminar', [CarritoController::class, 'eliminarProducto']);
-/*
-Route::get('/students', function (){
-    return 'obtniendo estudiantes';
-});*/
+Route::post('/carrito/finalizar', [CarritoController::class, 'finalizarCompra']);

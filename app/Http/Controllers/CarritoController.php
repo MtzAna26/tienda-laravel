@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\CarritoCompra;
 use App\Models\DetalleCarrito;
 use App\Models\Producto;
+use App\Models\Compra;
+use App\Models\DetalleCompra;
+use Illuminate\Support\Facades\Redis;
 
 class CarritoController extends Controller
 {
@@ -69,4 +72,74 @@ class CarritoController extends Controller
 
         return response()->json(['message' => 'Producto no encontrado en el carrito'], 404);
     }
+
+        public function finalizarCompra(Request $request)
+    {
+        $request->validate([
+            'cliente_id' => 'required|exists:clientes,id'
+        ]);
+
+        // Obtener el carrito del cliente
+        $carrito = CarritoCompra::where('cliente_id', $request->cliente_id)
+            ->where('estado', 'pendiente')
+            ->first();
+
+        if (!$carrito) {
+            return response()->json(['message' => 'No hay carrito activo'], 404);
+        }
+
+        $detalles = DetalleCarrito::where('carrito_id', $carrito->id)->get();
+
+        if ($detalles->isEmpty()) {
+            return response()->json(['message' => 'El carrito está vacío'], 400);
+        }
+
+        $total = 0;
+
+        // Verificar stock y calcular total
+        foreach ($detalles as $detalle) {
+            $producto = Producto::find($detalle->producto_id);
+
+            if ($producto->stock < $detalle->cantidad) {
+                return response()->json([
+                    'message' => "Stock insuficiente para el producto: {$producto->nombre}"
+                ], 400);
+            }
+
+            $total += $producto->precio * $detalle->cantidad;
+        }
+
+        // Registrar la compra
+        $compra = Compra::create([
+            'cliente_id' => $request->cliente_id,
+            'fecha' => now(),
+            'total' => $total
+        ]);
+
+        // Registrar detalles de compra y actualizar stock
+        foreach ($detalles as $detalle) {
+            $producto = Producto::find($detalle->producto_id);
+            
+            DetalleCompra::create([
+                'compra_id' => $compra->id,
+                'producto_id' => $producto->id,
+                'cantidad' => $detalle->cantidad,
+                'subtotal' => $producto->precio * $detalle->cantidad
+            ]);
+
+            // Descontar stock
+            $producto->stock -= $detalle->cantidad;
+            $producto->save();
+        }
+
+        // Marcar carrito como finalizado
+        $carrito->estado = 'finalizado';
+        $carrito->save();
+
+        // Vaciar carrito
+        DetalleCarrito::where('carrito_id', $carrito->id)->delete();
+
+        return response()->json(['message' => 'Compra finalizada con éxito', 'compra_id' => $compra->id], 200);
+    }
+
 }
